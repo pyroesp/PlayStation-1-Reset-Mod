@@ -15,3 +15,7 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
 #define ID_ANP_CTRL 0x5A73 // analog/pad  
 #define ID_ANS_CTRL 0x5A53 // analog/stick  
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
+
+License:
+---------  
+Attribution-ShareAlike 4.0 International, see license file for more info
