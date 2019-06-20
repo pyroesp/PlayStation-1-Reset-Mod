@@ -16,6 +16,17 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
 #define ID_ANS_CTRL 0x5A53 // analog/stick  
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
 
+2 different combos programmed:
+------------------------------
+Select + Start + L2 + R2 for digital and analog controllers.  
+A + B + Trigger for GUNCON controller. I don't think this combination is ever needed, but I might add the X/Y position to this too.  
+I might make it so it only resets if the GUNCON is not pointed towards the TV.
+
+PlayStation information:
+------------------------
+All PlayStation related information I found came from NO$PSX on problemkaputt.de.  
+There's a ton of super cool info.
+
 License:
 ---------  
 Attribution-ShareAlike 4.0 International, see license file for more info
