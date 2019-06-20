@@ -6,7 +6,7 @@
  * PB4 - MISO (output, do not connect)
  * PB3 - MOSI (input, connect to controller DATA)
  * PB2 - /SS (input, connect to select)
- * PB1 - playstation reset (output), connect to high side of reset switch
+ * PB1 - playstation reset (output, connect to high side of reset switch)
  * 
  */
 
