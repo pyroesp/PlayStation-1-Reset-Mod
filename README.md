@@ -12,6 +12,10 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
  The atmega328 can sink 20mA, which is more than enough to pull the high side of the switch down.  
  The switch is being pulled up by a 13.3k resistor to 3.5V.
 
+Youtube:
+--------
+https://youtu.be/H-n-7R_S09U
+
 4 controllers programmed:  
 ------------------------
 #define ID_DIG_CTRL 0x5A41 // digital  
