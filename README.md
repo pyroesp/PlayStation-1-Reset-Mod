@@ -1,7 +1,7 @@
 # PlayStation 1 Reset Mod  
 
 PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano.  
-**UNTESTED**, I'm not responsible if your PS1 blows up.  
+**TESTED**, still, I'm not responsible if your PS1 blows up.  
 
  * PB5 - SCK (input, connect to clock)
  * PB4 - MISO (output, do not connect)
@@ -9,7 +9,7 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
  * PB2 - /SS (input, connect to select)
  * PB1 - playstation reset (output, connect to high side of reset switch)  
  
- The atmega328 can sink 20mA, which should be more than enough to pull the high side of the switch down.  
+ The atmega328 can sink 20mA, which is more than enough to pull the high side of the switch down.  
  The switch is being pulled up by a 13.3k resistor to 3.5V.
 
 4 controllers programmed:  
