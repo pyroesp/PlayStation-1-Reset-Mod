@@ -7,7 +7,7 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
  * PB4 - MISO (output, do not connect)
  * PB3 - MOSI (input, connect to controller DATA)
  * PB2 - /SS (input, connect to select)
- * PB1 - playstation reset (output), connect to high side of reset switch  
+ * PB1 - playstation reset (output, connect to high side of reset switch)  
  
  The atmega328 can sink 20mA, which should be more than enough to pull the high side of the switch down.  
  The switch is being pulled up by a 13.3k resistor to 3.5V.
