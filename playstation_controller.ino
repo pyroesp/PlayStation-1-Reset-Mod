@@ -43,7 +43,7 @@ enum Keys{
 };
 
 /* PlayStation Controller Union */
-// TODO : Check endianness of union so everything is copied correctly
+// TODO : Check endianness of union so everything is set in the right spot
 union PS1_Ctrl{
   uint8_t buff[8]; // buffer to read SPI
   struct{
