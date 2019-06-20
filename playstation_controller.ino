@@ -43,6 +43,7 @@ enum Keys{
 };
 
 /* PlayStation Controller Union */
+// TODO : Check endianness of union so everything is copied correctly
 union PS1_Ctrl{
   uint8_t buff[8]; // buffer to read SPI
   struct{
@@ -57,7 +58,7 @@ union PS1_Ctrl{
       };
     };
     union{
-      //light gun only (scanlines since vsync
+      //light gun only (scanlines since vsync)
       uint16_t y_pos; // if x_pos = 0x0001 && y_pos = 0x000A => not aimed at screen
       struct{
         uint8_t adc2; // left joy X
@@ -97,7 +98,7 @@ void setup() {
   pinMode(MISO, OUTPUT);
   // Set reset pin to input for tristate
   pinMode(PB1, INPUT);
-  digitalWrite(PB1, LOW);
+  digitalWrite(PB1, LOW); // disable pull-ups
 
   // Clear buffer
   ctrl_Clear(&c);
@@ -108,6 +109,7 @@ void setup() {
   new_data = 0;
 }
 
+/* Interrupt */
 ISR (SPI_STC_vect){
   data = SPDR;
   // check incoming byte for start of data if not processing
@@ -147,7 +149,6 @@ void loop() {
         break;
     }
     if (0 == (c.switches ^ key_combo)){
-      process_data = 0;
       // TODO: does resetting the playstation cut the power too ?
       pinMode(PB1, OUTPUT);
       digitalWrite(PB1, LOW);
@@ -160,5 +161,8 @@ void loop() {
       // reset switch has a 13.3k pull up to 3.5V, 
       // when reset is pressed 260µA is drawn from the 3.5V through the resistor.
     }
+    // Clear buffer when done processing key
+    ctrl_Clear(&c);
+    process_data = 0; // clear process_data var
   }
 }
