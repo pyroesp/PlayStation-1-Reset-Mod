@@ -7,7 +7,10 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
  * PB4 - MISO (output, do not connect)
  * PB3 - MOSI (input, connect to controller DATA)
  * PB2 - /SS (input, connect to select)
- * PB1 - playstation reset (output), connect to high side of reset switch
+ * PB1 - playstation reset (output), connect to high side of reset switch  
+ 
+ The atmega328 can sink 20mA, which should be more than enough to pull the high side of the switch down.  
+ The switch is being pulled up by a 13.3k resistor to 3.5V.
 
 4 controllers programmed:  
 ------------------------
@@ -20,12 +23,12 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
 ------------------------------
 Select + Start + L2 + R2 for digital and analog controllers.  
 A + B + Trigger for GUNCON controller. I don't think this combination is ever needed, but I might add the X/Y position to this too.  
-I might make it so it only resets if the GUNCON is not pointed towards the TV.
+I might make it so it only resets if the GUNCON is not pointed towards the TV. I have to test this before making the change.
 
 PlayStation information:
 ------------------------
 All PlayStation related information I found came from NO$PSX on problemkaputt.de.  
-There's a ton of super cool info.
+There's a ton of super cool info on there.
 
 License:
 ---------  
