@@ -22,7 +22,9 @@ PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano
 2 different combos programmed:
 ------------------------------
 Select + Start + L2 + R2 for digital and analog controllers.  
-A + B + Trigger for GUNCON controller. I don't think this combination is ever needed, but I might add the X/Y position to this too.  
+
+A + B + Trigger for GUNCON controller.  
+I don't think this combination is ever needed, but I might add the X/Y position to this too.  
 I might make it so it only resets if the GUNCON is not pointed towards the TV. I have to test this before making the change.
 
 PlayStation information:
