@@ -1,6 +1,6 @@
 /*
- * Arduino nano reset combo mod POC
- * --------------------------------
+ * Arduino nano PlayStation 1 reset combo mod
+ * ------------------------------------------
  * 
  * PB5 - SCK (input, connect to clock)
  * PB4 - MISO (output, do not connect)
