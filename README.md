@@ -1,16 +1,18 @@
 # PlayStation 1 Reset Mod  
 
-PlayStation 1 Controller Combo Reset mod, **proof of concept** with arduino nano.  
+PlayStation 1 Controller Combination Reset mod, with Arduino Nano.  
 **TESTED**, still, I'm not responsible if your PS1 blows up.  
 
  * PB5 - SCK (input, connect to clock)
  * PB4 - MISO (output, do not connect)
  * PB3 - MOSI (input, connect to controller DATA)
  * PB2 - /SS (input, connect to select)
- * PB1 - playstation reset (output, connect to high side of reset switch)  
- 
- The atmega328 can sink 20mA, which is more than enough to pull the high side of the switch down.  
- The switch is being pulled up by a 13.3k resistor to 3.5V.
+ * PB1 - playstation reset (output, connect to reset of parallel port (pin 2))
+
+You also need power and GND. For power use the 3.5V.  
+
+Resetting the PlayStation with the GUNCON does not currently work.  
+I have only tested this with the classic controller, not the analog ones, but I'm pretty sure those will work fine.
 
 Youtube:
 --------
