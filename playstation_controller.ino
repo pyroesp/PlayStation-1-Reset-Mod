@@ -2,19 +2,44 @@
  * Arduino nano reset combo mod POC
  * --------------------------------
  * 
- * PB5 - SCK (input, connect to clock)
- * PB4 - MISO (output, do not connect)
- * PB3 - MOSI (input, connect to controller DATA)
- * PB2 - /SS (input, connect to select)
- * PB1 - playstation reset (output), connect to high side of reset switch
+ * PB5 - SCK (input, connect to PS1 clock)
+ * PB4 - CMD (input, connect to PS1 TX)
+ * PB3 - DATA (input, connect to PS1 RX)
+ * PB2 - /SS (input, connect to controller 1 select)
+ * PB1 - playstation reset (output, connect to reset of parallel port (pin 2))
  * 
  */
+
+//#define DEBUG
+
+#if defined(DEBUG)
+  #define REBOOT_DELAY 1000
+#else
+  #define REBOOT_DELAY 30000
+#endif
+
+ 
+#define PS1_PIN_IO PINB // IO pin reg used for SS, CMD, DATA and RESET
+#define PS1_PORT_IO PORTB // IO pin reg used for SS, CMD, DATA and RESET
+#define PS1_DIR_IO DDRB // IO pin reg used for SS, CMD, DATA and RESET
+#define CLK 5
+#define SS 2
+#define CMD 4
+#define DATA 3
+#define RESET 1
 
  /* Controller ID */
 #define ID_DIG_CTRL 0x5A41 // digital
 #define ID_ANP_CTRL 0x5A73 // analog/pad
 #define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
+
+/* PlayStation Commands */
+#define CMD_SEL_CTRL_1 0x01 // select controller 1
+#define CMD_SEL_MEMC_1 0x81 // select memory card 1
+#define CMD_READ_SW 0x42 // read switch status from controller
+
+#define PS1_CTRL_BUFF_SIZE 9 // max size of buffer needed for a controller
 
 /* Key Combo */
 #define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110
@@ -42,10 +67,21 @@ enum Keys{
   SQUARE
 };
 
-/* PlayStation Controller Union */
-union PS1_Ctrl{
-  uint8_t buff[8]; // buffer to read SPI
+/* PlayStation Controller Command Union */
+union PS1_Cmd{
+  uint8_t buff[PS1_CTRL_BUFF_SIZE];
   struct{
+    uint8_t device_select; // 0x01 or 0x81
+    uint8_t command; // 0x42 for read switch
+    uint8_t unused[PS1_CTRL_BUFF_SIZE-2]; // always 0 for controller
+  };
+};
+
+/* PlayStation Controller Data Union */
+union PS1_Ctrl_Data{
+  uint8_t buff[PS1_CTRL_BUFF_SIZE]; // buffer to read data
+  struct{
+    uint8_t unused; // always 0xFF
     uint16_t id; // 0x5Ayz - y = type; z = # of half word
     uint16_t switches; // controller switches
     union{
@@ -67,103 +103,114 @@ union PS1_Ctrl{
   };
 };
 
-uint8_t data_in[32];
-uint8_t pos; // buffer position counter
-uint8_t data; // SPI input data
-uint8_t start_reading; 
-uint8_t process_data;
-uint8_t new_data;
-union PS1_Ctrl c;
 
-void ctrl_Clear(union PS1_Ctrl *p){
+void clear_buff(uint8_t *p, uint8_t size){
   uint8_t i;
-  for (i = 0; i < 8; i++)
-    p->buff[i] = 0;
+  for (i = 0; i < size; i++)
+    p[i] = 0;
 }
+
+uint8_t convert_buff_to_byte(uint8_t *p, uint8_t b){
+  uint8_t i, retval;
+  for (i = 0, retval = 0; i < 8; i++){
+    if (p[i] & b)
+      retval |= _BV(i);
+  }
+  return retval;
+}
+
+#define PORT_BUFF_SIZE 72 // (8 * PS1_CTRL_BUFF_SIZE)
+uint8_t port[PORT_BUFF_SIZE]; // port buffer
+uint8_t bit_cnt; // bit counter
+uint8_t byte_cnt; // byte counter
+
+union PS1_Ctrl_Data data;
+union PS1_Cmd cmd;
 
 void setup() {
-  // Set reset pin to input for tristate
-  pinMode(9, INPUT);
-  digitalWrite(9, LOW);
+  // Set PORT to inputs and no pull-ups
+  PS1_PORT_IO = 0;
+  PS1_DIR_IO = 0;
   
-  delay(30000); // wait 30 seconds after power up
+  delay(REBOOT_DELAY); // wait 30 seconds after power up
   Serial.begin(115200);
-  Serial.println("PlayStation 1 Controller Reset Mod");
-  // Turn on SPI in slave mode
-  SPCR |= _BV(SPE);
-  // Turn on SPI interrupts
-  SPCR |= _BV(SPIE);
-  // PlayStation is LSB first, so set DORD bit
-  SPCR |= _BV(DORD);
-  // PlayStation clock is high when idle, so set CPOL
-  SPCR |= _BV(CPOL);
-  // PlayStation reads on rising edge, so set CPHA
-  SPCR |= _BV(CPHA);
-  // Set MISO to output, but do NOT connect this pin, leav it floating or with pull down.
-  pinMode(MISO, OUTPUT);
+  Serial.println("PlayStation reset mod");
 
   // Clear buffer
-  ctrl_Clear(&c);
+  clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE);
+  clear_buff(data.buff, PS1_CTRL_BUFF_SIZE);
+  clear_buff(port, PORT_BUFF_SIZE);
   // Clear vars
-  pos = 0;
-  start_reading = 0;
-  process_data = 0;
-  new_data = 0;
-}
-
-ISR (SPI_STC_vect){
-  data = SPDR;
-  data_in[pos] = data;
-  pos++;
+  bit_cnt = 0;
+  byte_cnt = 0;
 }
 
 void loop() {
-  while (PINB & 0x04); // wait while there's no data incoming
-  while (!(PINB & 0x04)); // wait while data being read
-  /* Process Data */
-  uint8_t max_data = (data_in[1] & 0x0F) << 1 + 1; // get # halfword to bytes + 1 byte for the 0x5A from ID
-  uint8_t i, j;
-  // Copy data to structure
-  for (i = 1, j = 0; i <= max_data; i++, j++)
-    c.buff[j] = data_in[i];
-  pos = 0;
+  delay(50); // delay so you're not constantly reading data
+  while (!(PS1_PIN_IO & _BV(SS))); // if data is currently being sent, wait for it to finish
+  
+  bit_cnt = 0;
+  byte_cnt = 0;
+  while (PS1_PIN_IO & _BV(SS)); // wait while there's no data incoming
 
-  // Check ID
-  uint16_t key_combo;
-  switch(c.id){
-    case ID_GUNCON_CTRL:
-      Serial.println("GUNCON found");
-      key_combo = KEY_COMBO_GUNCON;
-      break;
-    case ID_DIG_CTRL:
-    case ID_ANP_CTRL:
-    case ID_ANS_CTRL:
-      Serial.println("Controller found");
-      key_combo = KEY_COMBO_CTRL;
-      break;
-    default:
-      Serial.println("Wrong data or unsupported device");
-      Serial.println(c.id, HEX);
-      break;
+  uint8_t clk, prev_clk;
+  clk = PS1_PIN_IO & _BV(CLK);
+  prev_clk = clk;
+  while (!(PS1_PIN_IO & _BV(SS))){ // loop while SS is low
+    clk = PS1_PIN_IO & _BV(CLK); // read clock input
+    if (!prev_clk && clk){ // check for rising edge
+      port[bit_cnt] = PS1_PIN_IO; // read port
+      ++bit_cnt;
+      if (bit_cnt >= PORT_BUFF_SIZE) // if all bits read, exit loop
+        break;
+    }
+    prev_clk = clk;
   }
+  while (!(PS1_PIN_IO & _BV(SS))); // if SS is still low after exiting the previous read loop, wait for it to go high
+  
+  // convert port buffer bits to byte
+  uint8_t i, j;
+  for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
+    cmd.buff[i] = convert_buff_to_byte(&port[i*8], _BV(CMD));
+    data.buff[i] = convert_buff_to_byte(&port[i*8], _BV(DATA));
+  }
+  // Check first command for device selected
+  if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
+    // Check ID
+    uint16_t key_combo;
+    switch(data.id){
+      case ID_GUNCON_CTRL:
+        Serial.println("GUNCON found");
+        key_combo = KEY_COMBO_GUNCON;
+      case ID_DIG_CTRL:
+      case ID_ANP_CTRL:
+      case ID_ANS_CTRL:
+        Serial.println("Controller found");
+        key_combo = KEY_COMBO_CTRL;
+        break;
+      default:
+        Serial.print("Wrong data or unsupported device: ");
+        Serial.println(data.id, HEX);
+        key_combo = 0;
+        break;
+    }
 
-  // Check switch combo
-  if (0 == (c.switches ^ key_combo)){
-    process_data = 0;
-    // TODO: does resetting the playstation cut the power too ?
-    pinMode(9, OUTPUT);
-    digitalWrite(9, LOW);
-    Serial.println("PlayStation Resetting");
-    delay(100); // hold reset for 100ms
-    pinMode(9, INPUT);
-    digitalWrite(9, LOW);
-    delay(30000); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
-    // for some reason, during boot sequence,
-    
-    // Output can sink 20mA
-    // reset switch has a 13.3k pull up to 3.5V, 
-    // when reset is pressed 260µA is drawn from the 3.5V through the resistor.
+    // Check switch combo
+    if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
+      // change RESET from input to output, logic low (PORT is already 0)
+      PS1_DIR_IO |= _BV(RESET);
+      Serial.println("PlayStation Resetting");
+      delay(100); // hold reset for 100ms
+      // change RESET back to input
+      PS1_DIR_IO &= ~_BV(RESET);
+      delay(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
+      
+      // Output can sink 20mA
+      // reset switch has a 13.3k pull up to 3.5V, 
+      // when reset is pressed 260µA is drawn from the 3.5V through the resistor.
+    }
   }
   
-  ctrl_Clear(&c); // clear controller stuff
+  clear_buff(data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
+  clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
 }
