@@ -2,6 +2,7 @@
  * Arduino nano reset combo mod POC
  * --------------------------------
  * 
+ * IO are setup on PORTB, but can be modified. See PS1_X_IO defines.
  * PB5 - SCK (input, connect to PS1 clock)
  * PB4 - CMD (input, connect to PS1 TX)
  * PB3 - DATA (input, connect to PS1 RX)
@@ -20,8 +21,8 @@
 
  
 #define PS1_PIN_IO PINB // IO pin reg used for SS, CMD, DATA and RESET
-#define PS1_PORT_IO PORTB // IO pin reg used for SS, CMD, DATA and RESET
-#define PS1_DIR_IO DDRB // IO pin reg used for SS, CMD, DATA and RESET
+#define PS1_PORT_IO PORTB // IO port reg used for SS, CMD, DATA and RESET
+#define PS1_DIR_IO DDRB // IO dir reg used for SS, CMD, DATA and RESET
 #define CLK 5
 #define SS 2
 #define CMD 4
@@ -122,7 +123,6 @@ uint8_t convert_buff_to_byte(uint8_t *p, uint8_t b){
 #define PORT_BUFF_SIZE 72 // (8 * PS1_CTRL_BUFF_SIZE)
 uint8_t port[PORT_BUFF_SIZE]; // port buffer
 uint8_t bit_cnt; // bit counter
-uint8_t byte_cnt; // byte counter
 
 union PS1_Ctrl_Data data;
 union PS1_Cmd cmd;
@@ -142,7 +142,6 @@ void setup() {
   clear_buff(port, PORT_BUFF_SIZE);
   // Clear vars
   bit_cnt = 0;
-  byte_cnt = 0;
 }
 
 void loop() {
@@ -150,7 +149,6 @@ void loop() {
   while (!(PS1_PIN_IO & _BV(SS))); // if data is currently being sent, wait for it to finish
   
   bit_cnt = 0;
-  byte_cnt = 0;
   while (PS1_PIN_IO & _BV(SS)); // wait while there's no data incoming
 
   uint8_t clk, prev_clk;
