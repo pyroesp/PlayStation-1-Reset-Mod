@@ -105,9 +105,9 @@ union PS1_Ctrl_Data{
 };
 
 
-void clear_buff(uint8_t *p, uint8_t size){
+void clear_buff(uint8_t *p, uint8_t s){
   uint8_t i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < s; i++)
     p[i] = 0;
 }
 
@@ -172,19 +172,25 @@ void loop() {
     cmd.buff[i] = convert_buff_to_byte(&port[i*8], _BV(CMD));
     data.buff[i] = convert_buff_to_byte(&port[i*8], _BV(DATA));
   }
+  
+  uint16_t key_combo = 0;
   // Check first command for device selected
   if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
     // Check ID
-    uint16_t key_combo;
     switch(data.id){
       case ID_GUNCON_CTRL:
         Serial.println("GUNCON found");
         key_combo = KEY_COMBO_GUNCON;
+        Serial.print("Switches = 0x");
+        Serial.println(data.switches, HEX);
+        break;
       case ID_DIG_CTRL:
       case ID_ANP_CTRL:
       case ID_ANS_CTRL:
         Serial.println("Controller found");
         key_combo = KEY_COMBO_CTRL;
+        Serial.print("Switches = 0x");
+        Serial.println(data.switches, HEX);
         break;
       default:
         Serial.print("Wrong data or unsupported device: ");
@@ -202,13 +208,10 @@ void loop() {
       // change RESET back to input
       PS1_DIR_IO &= ~_BV(RESET);
       delay(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
-      
-      // Output can sink 20mA
-      // reset switch has a 13.3k pull up to 3.5V, 
-      // when reset is pressed 260µA is drawn from the 3.5V through the resistor.
     }
+    
+    clear_buff(data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
+    clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
+    clear_buff(port, PORT_BUFF_SIZE); // clear PORT to remove all previous data and not get stuck in a reset loop if the controller is disconnected after a reset
   }
-  
-  clear_buff(data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
-  clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
 }
