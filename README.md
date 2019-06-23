@@ -5,7 +5,7 @@ PlayStation 1 Controller Combination Reset mod, with an Arduino Nano.
 
 Why
 ---
-Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the menu system without resetting the PlayStation.
+Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.
 
 Connections
 -----------
@@ -21,9 +21,7 @@ You also need power and GND. For power use the 3.5V provided by the PlayStation
 
 Tests
 ----- 
-I tried using the GUNCON but that does not currently work.  
-I have successfully tested this with the classic controller (0x5A41).  
-Still have to test the analog controllers, but I'm pretty sure those will work fine.
+I have successfully tested this with a digital controller, a GUNCON and an analog controller.  
 
 Youtube:
 --------
@@ -46,14 +44,14 @@ I might make it so it only resets if the GUNCON is not pointed towards the TV. I
 
 Changing combination:
 ---------------------
-Combination is defined by here:  
+Combination is defined here:  
 /* Key Combo */  
 #define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110  
 #define KEY_COMBO_GUNCON 0x9FF7 // A-trigger-B 1001 1111 1111 0111  
 
 If you want to change your combination, you'll have to change those defines.  
-A pressed buttons return 0.  
-The switch bits are defined as follows :  
+A pressed buttons return 0 and all controllers send a 16 bit value for the switch status.  
+The switch status bits are defined as follows :  
 
 |  Button  | Bit |
 |:--------:|:---:|
