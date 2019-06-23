@@ -72,7 +72,12 @@ The switch bits are defined as follows :
 | TRIANGLE |  12 |
 |  CIRCLE  |  13 |
 |   CROSS  |  14 |
-|  SQUARE  |  15 |
+|  SQUARE  |  15 |  
+
+The GUNCON buttons are:  
+* A = START
+* Trigger = CIRCLE
+* B = CROSS
 
 PlayStation information:
 ------------------------
