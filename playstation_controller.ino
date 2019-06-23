@@ -1,6 +1,6 @@
 /*
- * Arduino nano reset combo mod POC
- * --------------------------------
+ * Arduino nano reset combo mod 
+ * ----------------------------
  * 
  * IO are setup on PORTB, but can be modified. See PS1_X_IO defines.
  * PB5 - SCK (input, connect to PS1 clock)
