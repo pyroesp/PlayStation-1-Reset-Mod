@@ -1,18 +1,29 @@
 # PlayStation 1 Reset Mod  
 
-PlayStation 1 Controller Combination Reset mod, with Arduino Nano.  
+PlayStation 1 Controller Combination Reset mod, with an Arduino Nano.  
 **TESTED**, still, I'm not responsible if your PS1 blows up.  
 
- * PB5 - SCK (input, connect to clock)
- * PB4 - MISO (output, do not connect)
- * PB3 - MOSI (input, connect to controller DATA)
- * PB2 - /SS (input, connect to select)
+Why
+---
+Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the menu system without resetting the PlayStation.
+
+Connections
+-----------
+IO are setup on PORTB, but can be modified. See PS1_X_IO defines in the Arduino code.
+
+ * PB5 - SCK (input, connect to PS1 clock)
+ * PB4 - CMD (input, connect to PS1 TX)
+ * PB3 - DATA (input, connect to PS1 RX)
+ * PB2 - /SS (input, connect to controller 1 select)
  * PB1 - playstation reset (output, connect to reset of parallel port (pin 2))
 
-You also need power and GND. For power use the 3.5V.  
+You also need power and GND. For power use the 3.5V provided by the PlayStation  
 
-Resetting the PlayStation with the GUNCON does not currently work.  
-I have only tested this with the classic controller, not the analog ones, but I'm pretty sure those will work fine.
+Tests
+----- 
+I tried using the GUNCON but that does not currently work.  
+I have successfully tested this with the classic controller (0x5A41).  
+Still have to test the analog controllers, but I'm pretty sure those will work fine.
 
 Youtube:
 --------
@@ -32,6 +43,36 @@ Select + Start + L2 + R2 for digital and analog controllers.
 A + B + Trigger for GUNCON controller.  
 I don't think this combination is ever needed, but I might add the X/Y position to this too.  
 I might make it so it only resets if the GUNCON is not pointed towards the TV. I have to test this before making the change.
+
+Changing combination:
+---------------------
+Combination is defined by here:  
+/* Key Combo */  
+#define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110  
+#define KEY_COMBO_GUNCON 0x9FF7 // A-trigger-B 1001 1111 1111 0111  
+
+If you want to change your combination, you'll have to change those defines.  
+A pressed buttons return 0.  
+The switch bits are defined as follows :  
+
+|  Button  | Bit |
+|:--------:|:---:|
+|  SELECT  |  0  |
+|    L3    |  1  |
+|    R3    |  2  |
+|   START  |  3  |
+|    UP    |  4  |
+|   RIGHT  |  5  |
+|   DOWN   |  6  |
+|   LEFT   |  7  |
+|    L2    |  8  |
+|    R2    |  9  |
+|    L1    |  10 |
+|    R1    |  11 |
+| TRIANGLE |  12 |
+|  CIRCLE  |  13 |
+|   CROSS  |  14 |
+|  SQUARE  |  15 |
 
 PlayStation information:
 ------------------------
