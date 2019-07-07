@@ -1,6 +1,6 @@
 /*
- * Arduino nano reset combo mod 
- * ----------------------------
+ * Arduino nano reset combo mod POC
+ * --------------------------------
  * 
  * IO are setup on PORTB, but can be modified. See PS1_X_IO defines.
  * PB5 - SCK (input, connect to PS1 clock)
@@ -133,8 +133,10 @@ void setup() {
   PS1_DIR_IO = 0;
   
   delay(REBOOT_DELAY); // wait 30 seconds after power up
+#if defined(DEBUG)
   Serial.begin(115200);
   Serial.println("PlayStation reset mod");
+#endif
 
   // Clear buffer
   clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE);
@@ -179,22 +181,28 @@ void loop() {
     // Check ID
     switch(data.id){
       case ID_GUNCON_CTRL:
+#if defined(DEBUG)
         Serial.println("GUNCON found");
-        key_combo = KEY_COMBO_GUNCON;
         Serial.print("Switches = 0x");
         Serial.println(data.switches, HEX);
+#endif
+        key_combo = KEY_COMBO_GUNCON;
         break;
       case ID_DIG_CTRL:
       case ID_ANP_CTRL:
       case ID_ANS_CTRL:
+#if defined(DEBUG)
         Serial.println("Controller found");
-        key_combo = KEY_COMBO_CTRL;
         Serial.print("Switches = 0x");
         Serial.println(data.switches, HEX);
+#endif
+        key_combo = KEY_COMBO_CTRL;
         break;
       default:
+#if defined(DEBUG)
         Serial.print("Wrong data or unsupported device: ");
         Serial.println(data.id, HEX);
+#endif
         key_combo = 0;
         break;
     }
@@ -203,7 +211,9 @@ void loop() {
     if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
       // change RESET from input to output, logic low (PORT is already 0)
       PS1_DIR_IO |= _BV(RESET);
+#if defined(DEBUG)
       Serial.println("PlayStation Resetting");
+#endif
       delay(100); // hold reset for 100ms
       // change RESET back to input
       PS1_DIR_IO &= ~_BV(RESET);
