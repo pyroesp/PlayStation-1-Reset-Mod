@@ -25,7 +25,8 @@ I have successfully tested this with a digital controller, a GUNCON and an analo
 
 Youtube:
 --------
-https://youtu.be/H-n-7R_S09U
+Proof of concept: https://www.youtube.com/watch?v=H-n-7R_S09U 
+Final: https://www.youtube.com/watch?v=lb_uCGyv6pY
 
 4 controllers programmed:  
 ------------------------
