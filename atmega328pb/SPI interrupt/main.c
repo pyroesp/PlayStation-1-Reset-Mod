@@ -1,33 +1,29 @@
 /*
- * ATMEGA168_PS1_RESET_MOD.c
- *
  * Created: 21/08/2019 21:03:29
  * Author : pyroesp
+ 
+ * MCU 328PB : 2xSPI
+ *		- 16MHz
  */ 
 
 
 #include <avr/io.h>
+#include <avr/iom328pb.h>
 #include <avr/interrupt.h>
 
-#define  F_CPU 20000000L
+#define  F_CPU 16000000L
 #include <util/delay.h>
 
-#define REBOOT_DELAY 1000
-
+#define REBOOT_DELAY 30000 // 30 seconds
 
 #define PS1_PIN_IO PIND // IO pin reg used for SS, CMD, DATA and RESET
 #define PS1_PORT_IO PORTD // IO port reg used for SS, CMD, DATA and RESET
 #define PS1_DIR_IO DDRD // IO dir reg used for SS, CMD, DATA and RESET
-#define CLK 2
-#define SS 3
-#define CMD 4
-#define DATA 5
 #define RESET 6 // Only IO that outputs a logic 0
 
 /* Controller ID */
 #define ID_DIG_CTRL 0x5A41 // digital
 #define ID_ANP_CTRL 0x5A73 // analog/pad
-#define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
 /* PlayStation Commands */
@@ -37,7 +33,6 @@
 
 /* PlayStation Buff Size */
 #define PS1_CTRL_BUFF_SIZE 9 // max size of buffer needed for a controller
-#define PORT_BUFF_SIZE 72 // (8 * PS1_CTRL_BUFF_SIZE)
 
 /* Key Combo */
 #define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110
@@ -79,100 +74,152 @@ union PS1_Ctrl_Data{
 	};
 };
 
-uint8_t convert_buff_to_byte(uint8_t *p, uint8_t b);
 void clear_buff(uint8_t *p, uint8_t s);
 
-volatile uint8_t bit_cnt;
-volatile uint8_t buff[PORT_BUFF_SIZE];
+volatile union PS1_Cmd cmd;
+volatile union PS1_Ctrl_Data data;
+volatile uint8_t cmd_cnt, data_cnt;
 
-// ISR triggered by falling edge of SS
-ISR(INT1_vect){
-	PORTB |= _BV(0);
-	TCNT1 = 65495; // OVF at 65536 (41 clock/8 cycles)
-	TIMSK1 |= _BV(TOIE1);
+// SPI0 interrupt cmd
+ISR(SPI0_STC_vect){
+	cmd.buff[cmd_cnt] = SPDR0 ^ 0xFF;
+	cmd_cnt++;
 }
 
-// TMR1 interrupt is triggered when TMR1 overflows
-// Check if SS is low for long enough to start reading data, see extra SS pulse after controller data transfer
+// SPI1 interrupt data
+ISR(SPI1_STC_vect){
+	data.buff[data_cnt] = SPDR1 ^ 0xFF;
+	data_cnt++;
+}
+
+/*
 ISR(TIMER1_OVF_vect){
-	PORTB &= ~_BV(0);
-	if (!(PS1_PIN_IO & _BV(SS))){ // check if SS is still low
-		PORTB |= _BV(0);
-		EIMSK |= _BV(INT0); // enables external interrupt INT0
-	}
-	TIMSK1 &= ~_BV(TOIE1); // disable TIMER1 OVF interrupt
+	PORTB ^= _BV(PORTB0);	
+	TCNT1 = 65495; // OVF at 65536 (41 clock/8 cycles)
+}
+*/
+
+#define BAUD 9600
+#define MYUBRR F_CPU/16/BAUD-1
+
+void USART_Init(unsigned int ubrr){   
+	/*Set baud rate */   
+	UBRR0 = ubrr;  
+	/* Enable receiver and transmitter */   
+	UCSR0B = (1<<TXEN0);   
+	/* Set frame format: 8data, 1stop bit */ 
+	UCSR0C = (3<<UCSZ00);
 }
 
-// ISR triggered by rising edge of CLK
-ISR(INT0_vect){
-	buff[bit_cnt] = PS1_PIN_IO; // read port
-	bit_cnt++;
-	PORTB &= ~_BV(0);
+void USART_Transmit(unsigned char data ){   
+	/* Wait for empty transmit buffer */   
+	while ( !( UCSR0A & (1<<UDRE0)) );   
+	/* Put data into buffer, sends the data */   
+	UDR0 = data;
+}
+
+void USART_print(unsigned char *data){
+	int i;
+	for (i = 0; data[i] != 0; i++)
+		USART_Transmit(data[i]);
+}
+
+void USART_printByte(unsigned char byte){
+	char map[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	USART_print("0x");
+	USART_Transmit(map[byte >> 4]);
+	USART_Transmit(map[byte & 0xF]);
 }
 
 int main(void){
-	union PS1_Cmd cmd;
-	union PS1_Ctrl_Data data;
-	
+	int i;
 	// PORT REG
 	PS1_DIR_IO = 0;
 	PS1_PORT_IO = 0;
 	
-	DDRB |= _BV(0); // set PB0 to output
-	PORTB |= _BV(0); // set PB0 to output
+	// Setup IO
+	DDRE &= ~(_BV(DDRE3) | _BV(DDRE2)); // MOSI1 & SS1 set to inputs
+	DDRC &= ~_BV(DDRC0); // SCK1 set to inputs
+	DDRC |= _BV(DDRC1); // MISO1 set as output
+	DDRB &= ~(_BV(DDRB2) | _BV(DDRB3) | _BV(DDRB5)); // set MOSI0, SCK0, SS0 to input
+	DDRB |= _BV(DDRB4); // set MISO0 to output
+	
+	DDRB |= _BV(PORTB0);
+	
+	USART_Init(MYUBRR);
 	
 	// INTERRUPT REG
-	EICRA |= 0x03; // ISC01-ISC00: The rising edge of INT0 generates an interrupt request. -> CLK
-	EICRA |= 0x08; // ISC01-ISC00: The falling edge of INT1 generates an interrupt request. -> SS
-	EIMSK |= _BV(INT1); // INT1: External Interrupt Request 1 enabled and INT0 disabled
+	
 	// Select timer1 normal mode (timer overflow)
-	TCCR1A = 0;
-	TCCR1B = 2;
+	//TCCR1A = 0;
+	//TCCR1B = 2;
+	//TIMSK1 |= _BV(TOIE1);
+	//TCNT1 = 65495; // OVF at 65536 (41 clock/8 cycles)
+	
+	SPCR0 |= _BV(SPIE); // enable SPI0 interrupt
+	SPCR0 |= _BV(SPE); // enable SPI0
+	SPCR0 |= _BV(DORD); // data order LSB
+	SPCR0 |= _BV(CPOL); // CLK idle when high
+	
+	SPCR1 |= _BV(SPIE1); // enable SPI1 interrupt
+	SPCR1 |= _BV(SPE1); // enable SPI1
+	SPCR1 |= _BV(DORD1); // data order LSB
+	SPCR1 |= _BV(CPOL1); // CLK idle when high
+	
 	sei(); // enable global interrupt
 	
-	bit_cnt = 0;
-	clear_buff(buff, PORT_BUFF_SIZE);
+	data_cnt = 0;
+	cmd_cnt = 0;
 	clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE);
 	clear_buff(data.buff, PS1_CTRL_BUFF_SIZE);
 	
+	_delay_ms(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
+	
 	// MAIN LOOP
-    for(;;){
-		if (bit_cnt >= PORT_BUFF_SIZE){
-			EIMSK &= ~_BV(INT0);
-			EIMSK &= ~_BV(INT1);
-
-			bit_cnt = 0;
-
-			// Convert PORT data to bytes
-			uint8_t i;
+    for(;;){		
+		if (data_cnt >= PS1_CTRL_BUFF_SIZE || cmd_cnt >= PS1_CTRL_BUFF_SIZE){
+			SPCR0 &= ~_BV(SPE); // disable SPI0 
+			SPCR1 &= ~_BV(SPE1); // disable SPI1 
+			
+			USART_print("CMD: ");
 			for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
-				cmd.buff[i] = convert_buff_to_byte(&buff[i*8], _BV(CMD));
-				data.buff[i] = convert_buff_to_byte(&buff[i*8], _BV(DATA));
+				USART_printByte(cmd.buff[i]);
+				USART_print(" ");
 			}
-
+			USART_print("\r\n");
+			
+			USART_print("DATA: ");
+			for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
+				USART_printByte(data.buff[i]);
+				USART_print(" ");
+			}
+			USART_print("\r\n");
+			USART_print("-------------------------------\r\n");
+			
 			uint16_t key_combo = 0;
 			// Check first command for device selected
 			if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
 				// Check ID
 				switch(data.id){
 					case ID_GUNCON_CTRL:
-					key_combo = KEY_COMBO_GUNCON;
-					break;
+						key_combo = KEY_COMBO_GUNCON;
+						break;
 					case ID_DIG_CTRL:
 					case ID_ANP_CTRL:
-					case ID_ANS_CTRL:
-					key_combo = KEY_COMBO_CTRL;
-					break;
+						key_combo = KEY_COMBO_CTRL;
+						break;
 					default:
-					key_combo = 0;
-					break;
+						key_combo = 0;
+						break;
 				}
 		
 				// Check switch combo
 				if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
 					// change RESET from input to output, logic low (PORT is already 0)
 					PS1_DIR_IO |= _BV(RESET);
-					_delay_ms(1000); // hold reset for 100ms
+					USART_print("Resetting PlayStation\r\n");
+					USART_print("-------------------------------\r\n");
+					_delay_ms(100); // hold reset for 100ms
 					// change RESET back to input
 					PS1_DIR_IO &= ~_BV(RESET);
 					_delay_ms(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
@@ -181,11 +228,13 @@ int main(void){
 
 			clear_buff(data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
 			clear_buff(cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
-			clear_buff(buff, PORT_BUFF_SIZE); // clear PORT to remove all previous data and not get stuck in a reset loop if the controller is disconnected after a reset
+	
+			data_cnt = 0;
+			cmd_cnt = 0;
 	
 			_delay_ms(50);
-
-			EIMSK |= _BV(INT1); // enable ss interrupt
+			SPCR0 |= _BV(SPE); // enable SPI0 interrupt
+			SPCR1 |= _BV(SPE1); // enable SPI1 interrupt
 		}
     }
 }
@@ -193,15 +242,5 @@ int main(void){
 void clear_buff(uint8_t *p, uint8_t s){
 	uint8_t i;
 	for (i = 0; i < s; i++)
-	p[i] = 0;
-}
-
-// read 8 bytes -> 1 byte corresponding to bit b
-uint8_t convert_buff_to_byte(uint8_t *p, uint8_t b){
-	uint8_t i, retval;
-	for (i = 0, retval = 0; i < 8; i++){
-		if (p[i] & b)
-		retval |= _BV(i);
-	}
-	return retval;
+		p[i] = 0;
 }
