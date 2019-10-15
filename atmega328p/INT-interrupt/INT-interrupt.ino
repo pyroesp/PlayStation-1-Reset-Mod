@@ -11,10 +11,10 @@
  * 
  */
 
-#define DEBUG
+// #define DEBUG
 
 #if defined(DEBUG)
-  #define REBOOT_DELAY 1000
+  #define REBOOT_DELAY 30000
 #else
   #define REBOOT_DELAY 1
 #endif
@@ -26,12 +26,11 @@
 #define SS 3
 #define CMD 4
 #define DATA 5
-#define RESET 6 // ONly IO that outputs a logic 0
+#define RESET 6 // Only IO that outputs a logic 0
 
  /* Controller ID */
 #define ID_DIG_CTRL 0x5A41 // digital
 #define ID_ANP_CTRL 0x5A73 // analog/pad
-#define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
 /* PlayStation Commands */
@@ -238,7 +237,6 @@ void loop(){
           break;
         case ID_DIG_CTRL:
         case ID_ANP_CTRL:
-        case ID_ANS_CTRL:
 #if defined(DEBUG)
           Serial.println("Controller found");
           Serial.print("Switches = 0x");
