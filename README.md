@@ -23,19 +23,23 @@ NOTE: My mod is connected to controller port 1, but it can be adapted to also wo
 Versions
 --------
 
-ATMEGA328P - polling:  
+**ATMEGA328P**, aka Arduino Nano - polling (Arduino IDE 1.8.9):  
 This is the first working proof of concept that was done on an Arduino Nano.  
 The program used a polling method to read data and cmd between PS1 and controller every rising edge of the clock signal.  
 
-ATMEGA328P - INT interrupt:  
+**ATMEGA328P**, aka Arduino Nano - INT interrupt (Arduino IDE 1.8.9):  
 The code is similar except that instead of a polling loop, the INT interrupt is used on the SS signal and CLK signal.  
 I can't actually remember if this worked, I'll have to look at my twitch vod.  
 
-ATMEGA328PB - SPI interrupt:
+**ATMEGA328PB** - SPI interrupt (Atmel Studio 7.0):
 The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
 This version is way way more stable than the previous ones.  
 
-PIC16F18325 - SPI interrupt:
+Note: The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace the ATMEGA328P on an Arduino Nano to the PB version.  
+Which is what I did.  
+
+
+**PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:
 I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the cheapest IIRC.  
 I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
