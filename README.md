@@ -1,23 +1,43 @@
 # PlayStation 1 Reset Mod  
 
-PlayStation 1 Controller Combination Reset mod, with an Arduino Nano.  
-**TESTED**, still, I'm not responsible if your PS1 blows up.  
+PlayStation 1 controller combination reset mod.
+
+Disclaimer
+----------  
+I'm not responsible if you mess up the mod and blow up your PlayStation 1.  
+If you don't know what you're doing, go to someone that does.    
 
 Why
 ---
-Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.
+Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.  
+Also, because I can.
 
-Connections
------------
-IO are setup on PORTB, but can be modified. See PS1_X_IO defines in the Arduino code.
+How does it work
+----------------
+The PlayStation sends commands to the controller and the controller responds with data.  
+The command and data is read by the microcontroller and after some checks, it either does nothing or it resets the PlayStation.  
+The communication is very similar to SPI, which is why I'm using it in the later versions of the mod.
 
- * PB5 - SCK (input, connect to PS1 clock)
- * PB4 - CMD (input, connect to PS1 TX)
- * PB3 - DATA (input, connect to PS1 RX)
- * PB2 - /SS (input, connect to controller 1 select)
- * PB1 - playstation reset (output, connect to reset of parallel port (pin 2))
+NOTE: My mod is connected to controller port 1, but it can be adapted to also work with the 2nd port by adding the SS of port 2 to the code.
 
-You also need power and GND. For power use the 3.5V provided by the PlayStation  
+Versions
+--------
+
+ATMEGA328P - polling:  
+This is the first working proof of concept that was done on an Arduino Nano.  
+The program used a polling method to read data and cmd between PS1 and controller every rising edge of the clock signal.  
+
+ATMEGA328P - INT interrupt:  
+The code is similar except that instead of a polling loop, the INT interrupt is used on the SS signal and CLK signal.  
+I can't actually remember if this worked, I'll have to look at my twitch vod.  
+
+ATMEGA328PB - SPI interrupt:
+The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
+This version is way way more stable than the previous ones.  
+
+PIC16F18325 - SPI interrupt:
+I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the cheapest IIRC.  
+I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
 Tests
 ----- 
@@ -25,14 +45,15 @@ I have successfully tested this with a digital controller, a GUNCON and an analo
 
 Youtube:
 --------
-Proof of concept: https://www.youtube.com/watch?v=H-n-7R_S09U  
-Final: https://www.youtube.com/watch?v=lb_uCGyv6pY
+Proof of concept of the first version: https://www.youtube.com/watch?v=H-n-7R_S09U  
+Final proof of concept of the first version: https://www.youtube.com/watch?v=lb_uCGyv6pY  
+
+See also a 6 part video where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
 
 4 controllers programmed:  
 ------------------------
 #define ID_DIG_CTRL 0x5A41 // digital  
 #define ID_ANP_CTRL 0x5A73 // analog/pad  
-#define ID_ANS_CTRL 0x5A53 // analog/stick  
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
 
 2 different combos programmed:
