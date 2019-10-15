@@ -60,7 +60,6 @@
 /* Controller ID */
 #define ID_DIG_CTRL 0x5A41 // digital   0101 1010 0100 0001 | 1000 0010 0101 1010  825A
 #define ID_ANP_CTRL 0x5A73 // analog/pad
-#define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
 /* PlayStation Commands */
@@ -284,16 +283,15 @@ void main(void){
                 // Check ID
                 switch(data.id){
                     case ID_GUNCON_CTRL:
-                    key_combo = KEY_COMBO_GUNCON;
-                    break;
+						key_combo = KEY_COMBO_GUNCON;
+						break;
                     case ID_DIG_CTRL:
                     case ID_ANP_CTRL:
-                    case ID_ANS_CTRL:
-                    key_combo = KEY_COMBO_CTRL;
-                    break;
+						key_combo = KEY_COMBO_CTRL;
+						break;
                     default:
-                    key_combo = 0;
-                    break;
+						key_combo = 0;
+						break;
                 }
 
                 // Check switch combo
