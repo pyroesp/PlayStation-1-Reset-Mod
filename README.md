@@ -36,7 +36,7 @@ I can't actually remember if this worked, I'll have to look at my twitch vod.
 The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
 This version is way way more stable than the previous ones.  
 
-\***Note**: The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace the ATMEGA328P on an Arduino Nano, which is what I did.  
+\***Note**: The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. This is what I did.  
 
 ### Final version
 **PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:
