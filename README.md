@@ -32,14 +32,14 @@ The program used a polling method to read data and cmd between PS1 and controlle
 The code is similar except that instead of a polling loop, the INT interrupt is used on the SS signal and CLK signal.  
 I can't actually remember if this worked, I'll have to look at my twitch vod.  
 
-**ATMEGA328PB** - SPI interrupt (Atmel Studio 7.0):
+**ATMEGA328PB** - SPI interrupt (Atmel Studio 7.0):  
 The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
 This version is way way more stable than the previous ones.  
 
 \***Note**: The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. This is what I did.  
 
 ### Final version
-**PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:
+**PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:  
 I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the cheapest IIRC.  
 I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
