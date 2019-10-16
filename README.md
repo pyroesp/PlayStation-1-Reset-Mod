@@ -47,15 +47,16 @@ Tests
 ----- 
 I have successfully tested this with a digital controller, a GUNCON and an analog controller.  
 
-PCB
----
+Schematic and PCB
+-----------------
+![schematic](https://i.imgur.com/yY38g31.png)  
+
 PCB is 14.5mm x 12mm, see images below.  
+![pcb front](https://i.imgur.com/OdFXijV.png)  
+ 
+![pcb back](https://i.imgur.com/sjupgW4.png)  
 
-![pcb front](https://i.imgur.com/OdFXijV.png)
-
-![pcb back](https://i.imgur.com/sjupgW4.png)
-
-![pcb front footprint](https://i.imgur.com/RlzW3SB.png)
+![pcb front footprint](https://i.imgur.com/RlzW3SB.png)  
 
 Youtube:
 --------
