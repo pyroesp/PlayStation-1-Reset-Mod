@@ -45,8 +45,9 @@ Tests
 ----- 
 I have successfully tested this with a digital controller, a GUNCON and an analog controller.  
 
-PCB pictures:
--------------
+PCB
+---
+PCB is 14.5mm x 12mm, see images below.  
 
 ![pcb front](https://i.imgur.com/OdFXijV.png)
 
