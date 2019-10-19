@@ -49,14 +49,13 @@ I have successfully tested this with a digital controller, a GUNCON and an analo
 
 Schematic and PCB
 -----------------
-![schematic](https://i.imgur.com/yY38g31.png)  
+![schematic](/pictures/mod/schematic.png)  
 
 PCB is 14.5mm x 12mm, see images below.  
-![pcb front](https://i.imgur.com/OdFXijV.png)  
+![pcb front](/pictures/mod/pcb%20-%20front.png)  
  
-![pcb back](https://i.imgur.com/sjupgW4.png)  
-
-![pcb front footprint](https://i.imgur.com/RlzW3SB.png)  
+![pcb back](/pictures/mod/pcb%20-%20bottom.png)  
+You can choose from three different cap sizes: 1206,0805 and 0603.
 
 Youtube:
 --------
