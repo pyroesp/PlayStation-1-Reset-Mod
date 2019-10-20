@@ -2,10 +2,19 @@
  * File:   main.c
  * Author: pyroesp
  * 
- * Playstation 1 Reset Mod for PIC16F18325
+ * PlayStation 1 Reset Mod for PIC16F18325
  *
  * Created on September 21, 2019, 5:33 PM
+ 
+ Connection:
+    RA2 = SS
+    RC0 = CLK
+    RC1 = DATA
+    RC2 = CMD
+    SDO1,2 = unassigned
+    RC5 = RESET
  */
+
 
 // CONFIG1
 #pragma config FEXTOSC = OFF     // FEXTOSC External Oscillator mode Selection bits (HS (crystal oscillator) above 4 MHz)
@@ -43,23 +52,22 @@
 
 #define _BV(b) (1<<(b))
 
+// Uncomment the define below to have UART debugging
+//#define DEBUG
+#ifdef DEBUG
 #define REBOOT_DELAY 2 // 30 seconds
+#else
+#define REBOOT_DELAY 30
+#endif
 
-/*
-    RA2 = SS
-    RC0 = CLK
-    RC1 = DATA
-    RC2 = CMD
-    SDO1,2 = unassigned
- */
-
+/* Reset port */
 #define PS1_LAT_IO LATC // IO port reg used for RESET
 #define PS1_TRIS_IO TRISC // IO dir reg used for RESET
 #define PS1_RESET 5 // Only IO that outputs a logic 0
 
 /* Controller ID */
-#define ID_DIG_CTRL 0x5A41 // digital   0101 1010 0100 0001 | 1000 0010 0101 1010  825A
-#define ID_ANP_CTRL 0x5A73 // analog/pad
+#define ID_DIG_CTRL 0x5A41 // digital
+#define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
 /* PlayStation Commands */
@@ -67,7 +75,7 @@
 #define CMD_SEL_MEMC_1 0x81 // select memory card 1
 #define CMD_READ_SW 0x42 // read switch status from controller
 
-/* PlayStation Buff Size */
+/* PlayStation Communication Buff Size */
 #define PS1_CTRL_BUFF_SIZE 9 // max size of buffer needed for a controller
 
 /* Key Combo */
@@ -110,24 +118,31 @@ union PS1_Ctrl_Data{
     };
 };
 
-void clear_buff(uint8_t *p, uint8_t s);
-void __delay_s(uint8_t s);
-
+/* Global variables */
 volatile union PS1_Cmd cmd;
 volatile union PS1_Ctrl_Data data;
 volatile uint8_t cmd_cnt, data_cnt;
 
-// SPI interrupt cmd
-void __interrupt() _spi_int(void) {
-    LATAbits.LATA5 ^= 1; // toggle PIN A5
-    
+/* Function prototype */
+void reverse_byte(uint8_t *b);
+void clear_buff(uint8_t *p, uint8_t s);
+void __delay_s(uint8_t s);
+
+#ifdef DEBUG
+void UART_sendByte(uint8_t c);
+void UART_print(uint8_t *str);
+void UART_printHex(uint8_t b);
+#endif
+
+
+/* Interrupt */
+void __interrupt() _spi_int(void) {    
     // SPI1 interrupt
     if (PIR1bits.SSP1IF){
         cmd.buff[cmd_cnt] = SSP1BUF;
         cmd_cnt++;
         PIR1bits.SSP1IF = 0; // clear SPI1 flag
     }
-    
     // SPI2 interrupt
     if (PIR2bits.SSP2IF){
         data.buff[data_cnt] = SSP2BUF;
@@ -136,47 +151,22 @@ void __interrupt() _spi_int(void) {
     }
 }
 
-void UART_sendByte(uint8_t c){
-    TX1REG = c;
-    while(!TX1STAbits.TRMT);
-}
-
-void print(uint8_t *str){
+/* Main */
+void main(void){
     uint8_t i;
-    for (i = 0; str[i] != 0 && i < 255; i++)
-        UART_sendByte(str[i]);
-}
-
-void printHex(uint8_t b){
-    uint8_t low_nibble = b & 0x0F;
-    uint8_t high_nibble = (b >> 4) & 0x0F;
     
-    print((uint8_t*)"0x");
-    UART_sendByte(high_nibble >= 10 ? (high_nibble - 10 + 'A') : high_nibble + '0');
-    UART_sendByte(low_nibble >= 10 ? (low_nibble - 10 + 'A') : low_nibble + '0');
-}
-
-void reverseByte(uint8_t *b) {
-   *b = (*b & 0xF0) >> 4 | (*b & 0x0F) << 4;
-   *b = (*b & 0xCC) >> 2 | (*b & 0x33) << 2;
-   *b = (*b & 0xAA) >> 1 | (*b & 0x55) << 1;
-}
-
-void main(void){    
     // SETUP I/O
-    LATC = 0;
-    LATA = 0;
+    ANSELA = 0; // port A is digital IO
+    LATA = 0; // clear latch A
+    LATC = 0; // clear latch C
+    ANSELC = 0; // port C is digital IO
     
     PS1_LAT_IO &= ~_BV(PS1_RESET); // clear reset output 
     PS1_TRIS_IO |= _BV(PS1_RESET); // set reset pin to input
 
-    ANSELAbits.ANSA2 = 0; // SS set to digital I/O
     TRISAbits.TRISA2 = 1; // SS set to input
-    ANSELCbits.ANSC0 = 0; // SCK set to digital I/O
     TRISCbits.TRISC0 = 1; // SCK set to input
-    ANSELCbits.ANSC1 = 0; // SDI1 set to digital I/O
     TRISCbits.TRISC1 = 1; // SDI1 set to input
-    ANSELCbits.ANSC2 = 0; // SDI2 set to digital I/O
     TRISCbits.TRISC2 = 1; // SDI2 set to input
     
     // SETUP SPI1 & SPI2 I/O
@@ -207,6 +197,134 @@ void main(void){
     SSP1BUF = 0xFF;
     SSP2BUF = 0xFF;
     
+    // DEBUG
+#ifdef DEBUG
+    UART_init();
+#endif
+    
+    // SETUP variables and arrays
+    data_cnt = 0;
+    cmd_cnt = 0;
+    
+    clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE);
+    clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE);
+	
+    // delay before enabling interrupts
+    __delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
+    
+    // SETUP INTERRUPTS
+    PIR1bits.SSP1IF = 0; // clear SPI1 flag
+    PIR2bits.SSP2IF = 0; // clear SPI2 flag
+    PIE1bits.SSP1IE = 1; // enable MSSP interrupt (SPI1)
+    PIE2bits.SSP2IE = 1; // enable MSSP interrupt (SPI2)
+       
+    INTCONbits.PEIE = 1; // peripheral interrupt enable
+    INTCONbits.GIE = 1; // global interrupt enable
+       
+	// MAIN LOOP
+    for(;;){
+        if (data_cnt >= PS1_CTRL_BUFF_SIZE || cmd_cnt >= PS1_CTRL_BUFF_SIZE){
+            INTCONbits.PEIE = 0; // peripheral interrupt disable
+
+#ifdef DEBUG
+            UART_print((uint8_t*)"\n\rCMD: ");
+#endif
+            for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
+                reverse_byte((uint8_t*)&cmd.buff[i]);
+#ifdef DEBUG
+                UART_printHex((uint8_t)cmd.buff[i]);
+                UART_print((uint8_t*)" ");
+#endif
+            }
+#ifdef DEBUG
+            UART_print((uint8_t*)"\n\rDATA: ");
+#endif
+            for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
+                reverse_byte((uint8_t*)&data.buff[i]);
+#ifdef DEBUG
+                UART_printHex((uint8_t)data.buff[i]);
+                UART_print((uint8_t*)" ");
+#endif
+            }
+#ifdef DEBUG
+            UART_print((uint8_t*)"\n\rData done converting");
+#endif
+            
+            uint16_t key_combo = 0;
+            // Check first command for device selected
+            if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
+                // Check ID
+                switch(data.id){
+                    case ID_GUNCON_CTRL:
+                        key_combo = KEY_COMBO_GUNCON;
+                        break;
+                    case ID_DIG_CTRL:
+                    case ID_ANS_CTRL:
+                        key_combo = KEY_COMBO_CTRL;
+                        break;
+                    default:
+                        key_combo = 0;
+                        break;
+                }
+
+                // Check switch combo
+                if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
+#ifdef DEBUG
+                    UART_print((uint8_t*)"\n\rPlayStation Reset successful\n\r");
+#endif
+                    // change RESET pin from input to output, logic low (PORT is already 0)
+                    PS1_TRIS_IO &= ~_BV(PS1_RESET);
+                    __delay_ms(100); // hold reset for 100ms
+                    // change RESET back to input
+                    PS1_TRIS_IO |= _BV(PS1_RESET);
+                    __delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
+                }
+            }
+
+            clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
+            clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
+	
+            data_cnt = 0; // reset counters
+            cmd_cnt = 0; // reset counters
+            
+            PIR1bits.SSP1IF = 0; // clear SPI1 flag
+            PIR2bits.SSP2IF = 0; // clear SPI2 flag
+            INTCONbits.PEIE = 1; // peripheral interrupt enable
+        }
+    }
+    
+    for(;;);
+}
+
+/* Reverse byte order 
+ * The playstation send data LSb first,
+ * but the PIC uses a shift left register
+ * so the LSb from the PS1 becomes the MSb of the PIC
+*/
+void reverse_byte(uint8_t *b) {
+   *b = (*b & 0xF0) >> 4 | (*b & 0x0F) << 4;
+   *b = (*b & 0xCC) >> 2 | (*b & 0x33) << 2;
+   *b = (*b & 0xAA) >> 1 | (*b & 0x55) << 1;
+}
+
+/* Clear buffer of size s, aka fill with zero */
+void clear_buff(uint8_t *p, uint8_t s){
+    uint8_t i;
+    for (i = 0; i < s; i++)
+        p[i] = 0;
+}
+
+/* delay in seconds */
+void __delay_s(uint8_t s){
+    for (; s > 0; s--)
+        __delay_ms(1000);
+}
+
+/**********************************************************/
+/* UART Debug Functions */
+
+/*Initialize UART with TX on output RC3 */
+void UART_init(void){
     // SETUP UART
     ANSELCbits.ANSC3 = 0; // TX set to digital I/O
     LATCbits.LATC3 = 0; // set output 0
@@ -226,111 +344,28 @@ void main(void){
     CLKRCONbits.CLKRDC = 2; // 50% duty cyle
     CLKRCONbits.CLKREN = 1; // Enable CLK reference
     
-    TX1STAbits.TXEN = 1; // Enable transmitter    
-    
-    // DEBUG setup here
-    ANSELAbits.ANSA5 = 0; // set pin to digital I/O
-    TRISAbits.TRISA5 = 0; // set pin to output
-    LATAbits.LATA5 = 1; // set output high
-    
-    ANSELAbits.ANSA4 = 0; // set pin to digital I/O
-    TRISAbits.TRISA4 = 0; // set pin to output
-    LATAbits.LATA4 = 1; // set output high 
-    
-    // SETUP variables and arrays
-	data_cnt = 0;
-	cmd_cnt = 0;
-	clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE);
-	clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE);
-	
-    // delay before enabling interrupts
-	__delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
-    
-    // SETUP INTERRUPTS
-    PIR1bits.SSP1IF = 0; // clear SPI1 flag
-    PIR2bits.SSP2IF = 0; // clear SPI2 flag
-    PIE1bits.SSP1IE = 1; // enable MSSP interrupt (SPI1)
-    PIE2bits.SSP2IE = 1; // enable MSSP interrupt (SPI2)
-       
-    INTCONbits.PEIE = 1; // peripheral interrupt enable
-    INTCONbits.GIE = 1; // global interrupt enable
-    
-    uint8_t i;
-       
-	// MAIN LOOP
-    for(;;){
-        LATAbits.LATA4 ^= 1; // toggle output
-        if (data_cnt >= PS1_CTRL_BUFF_SIZE || cmd_cnt >= PS1_CTRL_BUFF_SIZE){
-            INTCONbits.PEIE = 0; // global interrupt disable
-
-            print((uint8_t*)"\n\rCMD: ");
-            for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
-                reverseByte((uint8_t*)&cmd.buff[i]);
-                printHex((uint8_t)cmd.buff[i]);
-                print((uint8_t*)" ");
-            }
-            print((uint8_t*)"\n\rDATA: ");
-            for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
-                reverseByte((uint8_t*)&data.buff[i]);
-                printHex((uint8_t)data.buff[i]);
-                print((uint8_t*)" ");
-            }
-            print((uint8_t*)"\n\rData done converting");
-            
-            uint16_t key_combo = 0;
-            // Check first command for device selected
-            if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
-                // Check ID
-                switch(data.id){
-                    case ID_GUNCON_CTRL:
-						key_combo = KEY_COMBO_GUNCON;
-						break;
-                    case ID_DIG_CTRL:
-                    case ID_ANP_CTRL:
-						key_combo = KEY_COMBO_CTRL;
-						break;
-                    default:
-						key_combo = 0;
-						break;
-                }
-
-                // Check switch combo
-                if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
-                    print((uint8_t*)"\n\rPlayStation Reset successful\n\r");
-                    // change RESET from input to output, logic low (PORT is already 0)
-                    PS1_TRIS_IO &= ~_BV(PS1_RESET);
-                    __delay_ms(100); // hold reset for 100ms
-                    // change RESET back to input
-                    PS1_TRIS_IO |= _BV(PS1_RESET);
-                    __delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
-                }
-            }
-
-            clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
-            clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
-	
-            data_cnt = 0;
-            cmd_cnt = 0;
-	
-            __delay_s(1);
-            
-            PIR1bits.SSP1IF = 0; // clear SPI1 flag
-            PIR2bits.SSP2IF = 0; // clear SPI2 flag
-            INTCONbits.PEIE = 1; // global interrupt enable
-        }
-    }
-    
-    for(;;);
-    return;
+    TX1STAbits.TXEN = 1; // Enable transmitter  
 }
 
-void clear_buff(uint8_t *p, uint8_t s){
-    uint8_t i;
-    for (i = 0; i < s; i++)
-        p[i] = 0;
+/* Send byte and wait until transfer finished */
+void UART_sendByte(uint8_t c){
+    TX1REG = c;
+    while(!TX1STAbits.TRMT);
 }
 
-void __delay_s(uint8_t s){
-    for (; s > 0; s--)
-        __delay_ms(1000);
+/* Send string */
+void UART_print(uint8_t *str){
+    uint8_t i;
+    for (i = 0; str[i] != 0 && i < 255; i++)
+        UART_sendByte(str[i]);
+}
+
+/* Print hex byte in format 0x%02X */
+void UART_printHex(uint8_t b){
+    uint8_t low_nibble = b & 0x0F;
+    uint8_t high_nibble = (b >> 4) & 0x0F;
+    
+    UART_print((uint8_t*)"0x");
+    UART_sendByte(high_nibble >= 10 ? (high_nibble - 10 + 'A') : high_nibble + '0');
+    UART_sendByte(low_nibble >= 10 ? (low_nibble - 10 + 'A') : low_nibble + '0');
 }
