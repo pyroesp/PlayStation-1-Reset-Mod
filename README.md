@@ -11,7 +11,7 @@ If you don't know what you're doing, go to someone that does.
 CAUTION
 -------
 Do **NOT** reset whilst you're saving data. If you do, you'll most likely corrupt your game save and/or your memory card.  
-I warned you.  
+You have been warned.    
 
 Why
 ---
