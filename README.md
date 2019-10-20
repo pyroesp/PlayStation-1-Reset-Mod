@@ -1,7 +1,7 @@
 # PlayStation 1 Reset Mod  
 
 PlayStation 1 controller combination reset mod.  
-This mod, when installed, allows you to reset your PlayStation through a button combination on the controller port 1.  
+This mod when installed, allows you to reset your PlayStation through a button combination on the controller port 1.  
 
 Disclaimer
 ----------  
