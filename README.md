@@ -10,7 +10,8 @@ If you don't know what you're doing, go to someone that does.
 Why
 ---
 Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.  
-Also, because I can.
+
+Also, because I can.  
 
 How does it work
 ----------------
@@ -57,12 +58,19 @@ PCB is 14.5mm x 12mm, see images below.
 ![pcb back](/pictures/mod/pcb%20-%20bottom.png)  
 You can choose from three different cap sizes: 1206,0805 and 0603.
 
+Parts list
+----------
+Only two components needed for this mod: the microcontroller and **one** capacitor.  
+\***Note:** Digikey links are for reference only.  
+1x [16F18325; 14-SOIC package](https://www.digikey.be/product-detail/en/microchip-technology/PIC16F18325-I-SL/PIC16F18325-I-SL-ND/5323625)  
+1x [0.1µF 16V; 1206](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012208030/732-8097-1-ND/5454724) **or** [0.1µF 16V; 0805](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012207045/732-8045-1-ND/5454672) **or** [0.1µF 16V; 0603](https://www.digikey.be/product-detail/en/samsung-electro-mechanics/CL10B104KO8NNNC/1276-1005-1-ND/3889091) package
+
 Youtube:
 --------
 Proof of concept of the first version: https://www.youtube.com/watch?v=H-n-7R_S09U  
 Final proof of concept of the first version: https://www.youtube.com/watch?v=lb_uCGyv6pY  
 
-See also a 6 part video where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
+See also [a 6 part video playlist](https://www.youtube.com/playlist?list=PLGaX4WJGgdHiliTw9mCHme-9vNLV6fG6E) where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
 
 3 controllers programmed:  
 ------------------------
