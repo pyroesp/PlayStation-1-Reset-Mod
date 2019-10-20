@@ -1,47 +1,51 @@
 # PlayStation 1 Reset Mod  
 
-PlayStation 1 controller combination reset mod.
+PlayStation 1 controller combination reset mod.  
+This mod, when installed, allows you to reset your PlayStation through a button combination on the controller port 1.  
 
 Disclaimer
 ----------  
 I'm not responsible if you mess up the mod and blow up your PlayStation 1.  
-If you don't know what you're doing, go to someone that does.    
+If you don't know what you're doing, go to someone that does.   
+
+CAUTION
+-------
+Do **NOT** reset whilst you're saving data. If you do, you'll most likely corrupt your game save and/or your memory card.  
+I warned you.  
 
 Why
 ---
 Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.  
 
-Also, because I can.  
-
 How does it work
 ----------------
 The PlayStation sends commands to the controller and the controller responds with data.  
-The command and data is read by the microcontroller and after some checks, it either does nothing or it resets the PlayStation.  
-The communication is very similar to SPI, which is why I'm using it in the later versions of the mod.
+The command and data is read by the microcontroller and after some checks to see if the button combo has been pressed, it will resets the PlayStation.  
+The communication is almost exactly like SPI, which is why I'm using it in the later versions of the mod.
 
-NOTE: My mod is connected to controller port 1, but it can be adapted to also work with the 2nd port by adding the SS of port 2 to the code.
+\***Note:** My mod is connected to controller port 1, but it can be adapted to also work with port 2.
 
 Versions
 --------
 
 ### Proof of concept and improvements:
-**ATMEGA328P**, aka Arduino Nano - polling (Arduino IDE 1.8.9):  
+**ATMEGA328P**, aka Arduino Nano - Polling (Arduino IDE 1.8.9):  
 This is the first working proof of concept that was done on an Arduino Nano.  
 The program used a polling method to read data and cmd between PS1 and controller every rising edge of the clock signal.  
 
 **ATMEGA328P**, aka Arduino Nano - INT interrupt (Arduino IDE 1.8.9):  
 The code is similar except that instead of a polling loop, the INT interrupt is used on the SS signal and CLK signal.  
-I can't actually remember if this worked, I'll have to look at my twitch vod.  
+I can't actually remember if this ever worked, I'll have to look at my twitch vod.  
 
 **ATMEGA328PB** - SPI interrupt (Atmel Studio 7.0):  
 The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
-This version is way way more stable than the previous ones.  
+This version is the original way I wanted to program this, but couldn't because I didn't have enough SPI modules, and is much more stable than the previous ones.  
 
-\***Note**: The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. This is what I did.  
+\***Note:** The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. That is what I did.  
 
 ### Final version
 **PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:  
-I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the cheapest IIRC.  
+I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the first one that popped up in the search IIRC.  
 I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
 Tests
@@ -56,7 +60,7 @@ PCB is 14.5mm x 12mm, see images below.
 ![pcb front](/pictures/mod/pcb%20-%20front.png)  
  
 ![pcb back](/pictures/mod/pcb%20-%20bottom.png)  
-You can choose from three different cap sizes: 1206,0805 and 0603.
+You can choose from three different cap sizes: 1206, 0805 and 0603.
 
 Parts list
 ----------
@@ -72,36 +76,36 @@ Only two components needed for this mod: the microcontroller and **one** capacit
 
 If you don't have a lot of experience soldering I recommend going for the 1206.
 
-Youtube:
---------
+Youtube
+-------
 Proof of concept of the first version: https://www.youtube.com/watch?v=H-n-7R_S09U  
 Final proof of concept of the first version: https://www.youtube.com/watch?v=lb_uCGyv6pY  
 
 See also [a 6 part video playlist](https://www.youtube.com/playlist?list=PLGaX4WJGgdHiliTw9mCHme-9vNLV6fG6E) where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
 
-3 controllers programmed:  
-------------------------
+Three controllers programmed  
+----------------------------
+Digital, Analog and GUNCON controllers have been programmed.  
+
 #define ID_DIG_CTRL 0x5A41 // digital  
-#define ID_ANP_CTRL 0x5A73 // analog/pad  
+#define ID_ANS_CTRL 0x5A73 // analog/stick  
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
 
-2 different combos programmed:
-------------------------------
-Select + Start + L2 + R2 for digital and analog controllers.  
+Two different combos programmed
+-------------------------------
+**Select + Start + L2 + R2** for **digital** and **analog** controllers.  
 
-A + B + Trigger for GUNCON controller.  
-I don't think this combination is ever needed, but I might add the X/Y position to this too.  
-I might make it so it only resets if the GUNCON is not pointed towards the TV. I have to test this before making the change.
+**A + B + Trigger** for **GUNCON** controller.  
 
-Changing combination:
----------------------
-Combination is defined here:  
+Changing combination
+--------------------
+Combination is defined in the code:  
 /* Key Combo */  
 #define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110  
 #define KEY_COMBO_GUNCON 0x9FF7 // A-trigger-B 1001 1111 1111 0111  
 
 If you want to change your combination, you'll have to change those defines.  
-A pressed button returns 0 and all controllers send a 16 bit value for their switch status.  
+A pressed button returns 0, all controllers send a 16 bit value for their switch status.  
 The switch status bits are defined as follows :  
 
 |  Button  | Bit |
@@ -128,11 +132,11 @@ The GUNCON buttons are:
 * Trigger = CIRCLE
 * B = CROSS
 
-PlayStation information:
-------------------------
+PlayStation information
+-----------------------
 All PlayStation related information I found came from NO$PSX on problemkaputt.de.  
 There's a ton of super cool info on there.
 
-License:
----------  
+License
+-------
 Attribution-ShareAlike 4.0 International, see license file for more info
