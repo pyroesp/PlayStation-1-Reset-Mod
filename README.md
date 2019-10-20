@@ -61,9 +61,16 @@ You can choose from three different cap sizes: 1206,0805 and 0603.
 Parts list
 ----------
 Only two components needed for this mod: the microcontroller and **one** capacitor.  
-\***Note:** Digikey links are for reference only.  
+\***Note:** Digikey links are for reference. Go to your electronics supplier of choice.  
 1x [16F18325; 14-SOIC package](https://www.digikey.be/product-detail/en/microchip-technology/PIC16F18325-I-SL/PIC16F18325-I-SL-ND/5323625)  
-1x [0.1µF 16V; 1206](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012208030/732-8097-1-ND/5454724) **or** [0.1µF 16V; 0805](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012207045/732-8045-1-ND/5454672) **or** [0.1µF 16V; 0603](https://www.digikey.be/product-detail/en/samsung-electro-mechanics/CL10B104KO8NNNC/1276-1005-1-ND/3889091) package
+1x [0.1µF 16V; 1206](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012208030/732-8097-1-ND/5454724) **or** [0.1µF 16V; 0805](https://www.digikey.be/product-detail/en/w-rth-elektronik/885012207045/732-8045-1-ND/5454672) **or** [0.1µF 16V; 0603](https://www.digikey.be/product-detail/en/samsung-electro-mechanics/CL10B104KO8NNNC/1276-1005-1-ND/3889091) package  
+
+\***Note:** Capacitor smd sizes:
+* 1206 = 0.125 in × 0.06 in | 3.2 mm × 1.6 mm  
+* 0805 = 0.080 in × 0.05 in | 2.0 mm × 1.25 mm
+* 0603 = 0.060 in × 0.03 in | 1.6 mm × 0.8 mm
+
+If you don't have a lot of experience soldering I recommend going for the 1206.
 
 Youtube:
 --------
