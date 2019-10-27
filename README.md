@@ -44,7 +44,7 @@ This version is the original way I wanted to program this, but couldn't because 
 \***Note:** The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. That is what I did.  
 
 ### Final version
-**PIC16F18325** - SPI interrupt (MPLABX) IDE v5.25:  
+**PIC16F18325** - SPI interrupt (MPLABX IDE v5.25):  
 I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the first one that popped up in the search IIRC.  
 I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
