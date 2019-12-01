@@ -3,13 +3,14 @@
 PlayStation 1 controller combination reset mod.  
 This mod when installed, allows you to reset your PlayStation through a button combination on the controller port 1.  
 
+**Checkout the Wiki for more information.**
+
 Disclaimer
 ----------  
-I'm not responsible if you mess up the mod and blow up your PlayStation 1.  
+I, or anyone contributing to this mod, am not responsible to whatever happens to your PlayStation 1 after installing or removing it.  
+You do this at your own risk.  
 If you don't know what you're doing, go to someone that does.   
 
-CAUTION
--------
 Do **NOT** reset whilst you're saving data. If you do, you'll most likely corrupt your game save and/or your memory card.  
 You have been warned.    
 
@@ -24,29 +25,6 @@ The command and data is read by the microcontroller and after some checks to see
 The communication is almost exactly like SPI, which is why I'm using it in the later versions of the mod.
 
 \***Note:** My mod is connected to controller port 1, but it can be adapted to also work with port 2.
-
-Versions
---------
-
-### Proof of concept and improvements:
-**ATMEGA328P**, aka Arduino Nano - Polling (Arduino IDE 1.8.9):  
-This is the first working proof of concept that was done on an Arduino Nano.  
-The program used a polling method to read data and cmd between PS1 and controller every rising edge of the clock signal.  
-
-**ATMEGA328P**, aka Arduino Nano - INT interrupt (Arduino IDE 1.8.9):  
-The code is similar except that instead of a polling loop, the INT interrupt is used on the SS signal and CLK signal.  
-I can't actually remember if this ever worked, I'll have to look at my twitch vod.  
-
-**ATMEGA328PB** - SPI interrupt (Atmel Studio 7.0):  
-The ATMEGA328PB has two SPI modules. This version uses those SPI modules to read data and command.  
-This version is the original way I wanted to program this, but couldn't because I didn't have enough SPI modules, and is much more stable than the previous ones.  
-
-\***Note:** The ATMEGA328PB is pin compatible with the ATMEGA328P, which means you can replace it on an Arduino Nano. That is what I did.  
-
-### Final version
-**PIC16F18325** - SPI interrupt (MPLABX IDE v5.25):  
-I looked at the cheapest microchip microcontroller that had two SPI modules. The 16F18325 was the first one that popped up in the search IIRC.  
-I adapted the ATMEGA328PB - SPI interrupt to work with the PIC mcu.  
 
 Tests
 ----- 
@@ -92,50 +70,6 @@ Digital, Analog and GUNCON controllers have been programmed.
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
 
 Two different combos programmed
--------------------------------
-**Select + Start + L2 + R2** for **digital** and **analog** controllers.  
-
-**A + B + Trigger** for **GUNCON** controller.  
-
-Changing combination
---------------------
-Combination is defined in the code:  
-/* Key Combo */  
-#define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110  
-#define KEY_COMBO_GUNCON 0x9FF7 // A-trigger-B 1001 1111 1111 0111  
-
-If you want to change your combination, you'll have to change those defines.  
-A pressed button returns 0, all controllers send a 16 bit value for their switch status.  
-The switch status bits are defined as follows :  
-
-|  Button  | Bit |
-|:--------:|:---:|
-|  SELECT  |  0  |
-|    L3    |  1  |
-|    R3    |  2  |
-|   START  |  3  |
-|    UP    |  4  |
-|   RIGHT  |  5  |
-|   DOWN   |  6  |
-|   LEFT   |  7  |
-|    L2    |  8  |
-|    R2    |  9  |
-|    L1    |  10 |
-|    R1    |  11 |
-| TRIANGLE |  12 |
-|  CIRCLE  |  13 |
-|   CROSS  |  14 |
-|  SQUARE  |  15 |  
-
-The GUNCON buttons are:  
-* A = START
-* Trigger = CIRCLE
-* B = CROSS
-
-PlayStation information
------------------------
-All PlayStation related information I found came from NO$PSX on problemkaputt.de.  
-There's a ton of super cool info on there.
 
 License
 -------
