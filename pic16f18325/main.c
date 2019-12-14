@@ -67,6 +67,7 @@
 
 /* Controller ID */
 #define ID_DIG_CTRL 0x5A41 // digital
+#define ID_ANP_CTRL 0x5A73 // analog/pad
 #define ID_ANS_CTRL 0x5A53 // analog/stick
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
@@ -129,6 +130,7 @@ void clear_buff(uint8_t *p, uint8_t s);
 void __delay_s(uint8_t s);
 
 #ifdef DEBUG
+void UART_init(void);
 void UART_sendByte(uint8_t c);
 void UART_print(uint8_t *str);
 void UART_printHex(uint8_t b);
@@ -139,14 +141,18 @@ void UART_printHex(uint8_t b);
 void __interrupt() _spi_int(void) {    
     // SPI1 interrupt
     if (PIR1bits.SSP1IF){
-        cmd.buff[cmd_cnt] = SSP1BUF;
-        cmd_cnt++;
+        if (data_cnt < PS1_CTRL_BUFF_SIZE){
+            data.buff[data_cnt] = SSP1BUF;
+            data_cnt++;
+        }
         PIR1bits.SSP1IF = 0; // clear SPI1 flag
     }
     // SPI2 interrupt
     if (PIR2bits.SSP2IF){
-        data.buff[data_cnt] = SSP2BUF;
-        data_cnt++;
+        if (cmd_cnt < PS1_CTRL_BUFF_SIZE){
+            cmd.buff[cmd_cnt] = SSP2BUF;
+            cmd_cnt++;
+        }
         PIR2bits.SSP2IF = 0; // clear SPI2 flag
     }
 }
@@ -200,6 +206,7 @@ void main(void){
     // DEBUG
 #ifdef DEBUG
     UART_init();
+    UART_print((uint8_t*)"PlayStation 1 mod:\n\r");
 #endif
     
     // SETUP variables and arrays
@@ -260,6 +267,7 @@ void main(void){
                         break;
                     case ID_DIG_CTRL:
                     case ID_ANS_CTRL:
+                    case ID_ANP_CTRL:
                         key_combo = KEY_COMBO_CTRL;
                         break;
                     default:
@@ -320,17 +328,18 @@ void __delay_s(uint8_t s){
         __delay_ms(1000);
 }
 
+#ifdef DEBUG
 /**********************************************************/
 /* UART Debug Functions */
 
-/*Initialize UART with TX on output RC3 */
+/* Initialize UART with TX on output RC3 */
 void UART_init(void){
     // SETUP UART
     ANSELCbits.ANSC3 = 0; // TX set to digital I/O
     LATCbits.LATC3 = 0; // set output 0
     TRISCbits.TRISC3 = 0; // TX set to output
     RC3PPSbits.RC3PPS = 0x14; // TX = RC3
-    
+
     SP1BRGL = 51; // 9615 baud
     SP1BRGH = 0; // 9615 baud
     // BRGH = 1 ; SPBRG = 16 -> 117.64k baud
@@ -369,3 +378,4 @@ void UART_printHex(uint8_t b){
     UART_sendByte(high_nibble >= 10 ? (high_nibble - 10 + 'A') : high_nibble + '0');
     UART_sendByte(low_nibble >= 10 ? (low_nibble - 10 + 'A') : low_nibble + '0');
 }
+#endif
