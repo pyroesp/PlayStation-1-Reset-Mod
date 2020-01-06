@@ -59,17 +59,19 @@ Youtube
 Proof of concept of the first version: https://www.youtube.com/watch?v=H-n-7R_S09U  
 Final proof of concept of the first version: https://www.youtube.com/watch?v=lb_uCGyv6pY  
 
-See also [a 6 part video playlist](https://www.youtube.com/playlist?list=PLGaX4WJGgdHiliTw9mCHme-9vNLV6fG6E) where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
+See also [an 8 part video playlist](https://www.youtube.com/playlist?list=PLGaX4WJGgdHiliTw9mCHme-9vNLV6fG6E) where I go from the Arduino Nano to a PIC16F18325 and a schematic with PCB.  
 
 Three controllers programmed  
 ----------------------------
 Digital, Analog and GUNCON controllers have been programmed.  
 
-#define ID_DIG_CTRL 0x5A41 // digital  
-#define ID_ANS_CTRL 0x5A73 // analog/stick  
-#define ID_GUNCON_CTRL 0x5A63 // light gun  
+/* Controller ID */
+#define ID_DIG_CTRL 0x5A41 // digital
+#define ID_ANP_CTRL 0x5A73 // analog/pad
+#define ID_ANS_CTRL 0x5A53 // analog/stick
+#define ID_GUNCON_CTRL 0x5A63 // light gun
 
-Two different combos programmed
+Two different combos programmed, one for the normal controllers and one for the GUNCON.
 
 License
 -------
