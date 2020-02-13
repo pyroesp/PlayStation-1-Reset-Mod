@@ -69,6 +69,7 @@
 #define ID_DIG_CTRL 0x5A41 // digital
 #define ID_ANP_CTRL 0x5A73 // analog/pad
 #define ID_ANS_CTRL 0x5A53 // analog/stick
+#define ID_DS2_CTRL 0x5A79 // dualshock 2
 #define ID_GUNCON_CTRL 0x5A63 // light gun
 
 /* PlayStation Commands */
@@ -268,6 +269,7 @@ void main(void){
                     case ID_DIG_CTRL:
                     case ID_ANS_CTRL:
                     case ID_ANP_CTRL:
+                    case ID_DS2_CTRL:
                         key_combo = KEY_COMBO_CTRL;
                         break;
                     default:
