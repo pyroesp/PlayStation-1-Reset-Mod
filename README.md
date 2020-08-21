@@ -65,11 +65,11 @@ Three controllers programmed
 ----------------------------
 Digital, Analog and GUNCON controllers have been programmed.  
 
-/* Controller ID */
-#define ID_DIG_CTRL 0x5A41 // digital
-#define ID_ANP_CTRL 0x5A73 // analog/pad
-#define ID_ANS_CTRL 0x5A53 // analog/stick
-#define ID_GUNCON_CTRL 0x5A63 // light gun
+/* Controller ID */  
+#define ID_DIG_CTRL 0x5A41 // digital  
+#define ID_ANP_CTRL 0x5A73 // analog/pad  
+#define ID_ANS_CTRL 0x5A53 // analog/stick  
+#define ID_GUNCON_CTRL 0x5A63 // light gun  
 
 Two different combos programmed, one for the normal controllers and one for the GUNCON.
 
