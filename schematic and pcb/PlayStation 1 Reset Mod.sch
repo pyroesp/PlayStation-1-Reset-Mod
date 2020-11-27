@@ -1,6 +1,5 @@
 EESchema Schematic File Version 4
-LIBS:PlayStation 1 Reset Mod-cache
-EELAYER 29 0
+EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -252,17 +251,6 @@ F 3 "~" H 3750 3300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:CP1_Small C1
-U 1 1 5DA2B48A
-P 4800 2250
-F 0 "C1" H 4950 2300 50  0000 L CNN
-F 1 "0.1uF" H 4900 2200 50  0000 L CNN
-F 2 "Capacitor_SMD:C_1206_3216Metric_Pad1.42x1.75mm_HandSolder" H 4800 2250 50  0001 C CNN
-F 3 "~" H 4800 2250 50  0001 C CNN
-	1    4800 2250
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:+3.3V #PWR05
 U 1 1 5DA2BBAB
 P 4800 2050
@@ -289,7 +277,7 @@ Wire Wire Line
 Wire Wire Line
 	4800 2150 4800 2100
 $Comp
-L Device:CP1_Small C2
+L Device:C_Polarized_Small_US C2
 U 1 1 5DA61B3C
 P 5250 2250
 F 0 "C2" H 5400 2300 50  0000 L CNN
@@ -382,7 +370,7 @@ VSS
 Text Label 7500 3150 1    50   ~ 0
 VDD
 $Comp
-L Device:CP1_Small C3
+L Device:C_Polarized_Small_US C3
 U 1 1 5DABA497
 P 5650 2250
 F 0 "C3" H 5800 2300 50  0000 L CNN
@@ -412,4 +400,15 @@ Wire Notes Line
 	6000 1800 4650 1800
 Text Notes 5100 1900 0    50   ~ 0
 * Only install one cap
+$Comp
+L Device:C_Polarized_Small_US C1
+U 1 1 5DA2B48A
+P 4800 2250
+F 0 "C1" H 4950 2300 50  0000 L CNN
+F 1 "0.1uF" H 4900 2200 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1206_3216Metric_Pad1.42x1.75mm_HandSolder" H 4800 2250 50  0001 C CNN
+F 3 "~" H 4800 2250 50  0001 C CNN
+	1    4800 2250
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
