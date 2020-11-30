@@ -7,7 +7,7 @@ This mod when installed, allows you to reset your PlayStation through a button c
 
 Disclaimer
 ----------  
-I, or anyone contributing to this mod, am not responsible to whatever happens to your PlayStation 1 after installing or removing it.  
+Anyone contributing to this mod is in no way responsible to whatever happens to your PlayStation 1 after installing or removing it.  
 You do this at your own risk.  
 If you don't know what you're doing, go to someone that does.   
 
@@ -15,16 +15,30 @@ Do **NOT** reset whilst you're saving data. If you do, you'll most likely corrup
 You have been warned.    
 
 Why
----
+-------
 Because I have a PSIO from Cybdyn System and there's no way to change games or get back into the PSIO menu system without resetting the PlayStation.  
+
+Versions
+--------
+
+* V1.2: Added support for the xStation reset (long reset pulse)  
+* V1.1: Fixed incorrect I/O  
+* V1.0: First release  
 
 How does it work
 ----------------
-The PlayStation sends commands to the controller and the controller responds with data.  
-The command and data is read by the microcontroller and after some checks to see if the button combo has been pressed, it will resets the PlayStation.  
-The communication is almost exactly like SPI, which is why I'm using it in the later versions of the mod.
+The PlayStation sends commands to the controller and the controller responds with the status of the buttons and joysticks.  
+The command and data is read by the microcontroller and after some checks to see if the button combo has been pressed, it will reset the PlayStation.  
+The communication is almost exactly like SPI, which is why I'm using it in the later versions of the mod.  
 
-\***Note:** My mod is connected to controller port 1, but it can be adapted to also work with port 2.
+The button combination for the controllers is:  
+- L2 + R2 + SELECT + START, for a short reset pulse  
+- L2 + R2 + SELECT + CROSS, for a long reset pulse, since V1.2  
+
+The lightgun combination is:
+- A + B + TRIGGER, for a long reset pulse 
+
+\***Note:** My mod is connected to controller port 1, but it can be adapted to also work with port 2.  
 
 Tests
 ----- 
@@ -70,8 +84,6 @@ Digital, Analog and GUNCON controllers have been programmed.
 #define ID_ANP_CTRL 0x5A73 // analog/pad  
 #define ID_ANS_CTRL 0x5A53 // analog/stick  
 #define ID_GUNCON_CTRL 0x5A63 // light gun  
-
-Two different combos programmed, one for the normal controllers and one for the GUNCON.
 
 License
 -------
