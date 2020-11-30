@@ -52,13 +52,17 @@
 
 #define _BV(b) (1<<(b))
 
-// Uncomment the define below to have UART debugging
+/* Uncomment the define below to have UART TX debugging on RC3 */
 //#define DEBUG
+
 #ifdef DEBUG
-#define REBOOT_DELAY 2 // 30 seconds
+#define REBOOT_DELAY 2 // s
 #else
-#define REBOOT_DELAY 30
+#define REBOOT_DELAY 20 // s
 #endif
+
+#define SHORT_DELAY 500 // ms
+#define LONG_DELAY 2 // s
 
 /* Reset port */
 #define PS1_LAT_IO LATC // IO port reg used for RESET
@@ -81,8 +85,30 @@
 #define PS1_CTRL_BUFF_SIZE 9 // max size of buffer needed for a controller
 
 /* Key Combo */
-#define KEY_COMBO_CTRL 0xFCF6 // select-start-L2-R2 1111 1100 1111 0110
-#define KEY_COMBO_GUNCON 0x9FF7 // A-trigger-B 1001 1111 1111 0111
+#define KEY_COMBO_CTRL 0xFCF6       // select-start-L2-R2   1111 1100 1111 0110
+#define KEY_COMBO_GUNCON 0x9FF7     // A-trigger-B          1001 1111 1111 0111
+#define KEY_COMBO_XSTATION 0xBCFE   // select-cross-L2-R2   1011 1100 1111 1110
+
+/*
+Keys : 
+    SELECT, // 0
+    L3,
+    R3,
+    START, // light gun A
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT,
+    L2,
+    R2,
+    L1,
+    R1,
+    TRIANGLE,
+    CIRCLE, // light gun trigger
+    CROSS, // light gun B
+    SQUARE
+*/
+
 
 /* PlayStation Controller Command Union */
 union PS1_Cmd{
@@ -130,11 +156,19 @@ void reverse_byte(uint8_t *b);
 void clear_buff(uint8_t *p, uint8_t s);
 void __delay_s(uint8_t s);
 
+void reset_short(void);
+void reset_long(void);
+
 #ifdef DEBUG
 void UART_init(void);
 void UART_sendByte(uint8_t c);
 void UART_print(uint8_t *str);
 void UART_printHex(uint8_t b);
+#else
+#define UART_init(a)
+#define UART_sendByte(a) 
+#define UART_print(a) 
+#define UART_printHex(a) 
 #endif
 
 
@@ -205,10 +239,8 @@ void main(void){
     SSP2BUF = 0xFF;
     
     // DEBUG
-#ifdef DEBUG
     UART_init();
     UART_print((uint8_t*)"PlayStation 1 mod:\n\r");
-#endif
     
     // SETUP variables and arrays
     data_cnt = 0;
@@ -216,9 +248,9 @@ void main(void){
     
     clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE);
     clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE);
-	
+    
     // delay before enabling interrupts
-    __delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
+    __delay_s(REBOOT_DELAY); // wait 20 sec before next reset
     
     // SETUP INTERRUPTS
     PIR1bits.SSP1IF = 0; // clear SPI1 flag
@@ -229,71 +261,56 @@ void main(void){
     INTCONbits.PEIE = 1; // peripheral interrupt enable
     INTCONbits.GIE = 1; // global interrupt enable
        
-	// MAIN LOOP
+    // MAIN LOOP
     for(;;){
         if (data_cnt >= PS1_CTRL_BUFF_SIZE || cmd_cnt >= PS1_CTRL_BUFF_SIZE){
             INTCONbits.PEIE = 0; // peripheral interrupt disable
-
-#ifdef DEBUG
             UART_print((uint8_t*)"\n\rCMD: ");
-#endif
             for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
                 reverse_byte((uint8_t*)&cmd.buff[i]);
-#ifdef DEBUG
                 UART_printHex((uint8_t)cmd.buff[i]);
                 UART_print((uint8_t*)" ");
-#endif
             }
-#ifdef DEBUG
             UART_print((uint8_t*)"\n\rDATA: ");
-#endif
             for (i = 0; i < PS1_CTRL_BUFF_SIZE; i++){
                 reverse_byte((uint8_t*)&data.buff[i]);
-#ifdef DEBUG
                 UART_printHex((uint8_t)data.buff[i]);
                 UART_print((uint8_t*)" ");
-#endif
             }
-#ifdef DEBUG
             UART_print((uint8_t*)"\n\rData done converting");
-#endif
             
-            uint16_t key_combo = 0;
             // Check first command for device selected
             if (cmd.device_select == CMD_SEL_CTRL_1 && cmd.command == CMD_READ_SW){
                 // Check ID
                 switch(data.id){
                     case ID_GUNCON_CTRL:
-                        key_combo = KEY_COMBO_GUNCON;
+                        // Check switch combo
+                        switch(data.switches){
+                            case KEY_COMBO_GUNCON:
+                                reset_long();
+                                break;
+                        }
                         break;
                     case ID_DIG_CTRL:
                     case ID_ANS_CTRL:
                     case ID_ANP_CTRL:
                     case ID_DS2_CTRL:
-                        key_combo = KEY_COMBO_CTRL;
+                        // Check switch combo
+                        switch(data.switches){
+                            case KEY_COMBO_CTRL:
+                                reset_short();
+                                break;
+                            case KEY_COMBO_XSTATION:
+                                reset_long();
+                                break;
+                        }
                         break;
-                    default:
-                        key_combo = 0;
-                        break;
-                }
-
-                // Check switch combo
-                if (key_combo != 0 && 0 == (data.switches ^ key_combo)){
-#ifdef DEBUG
-                    UART_print((uint8_t*)"\n\rPlayStation Reset successful\n\r");
-#endif
-                    // change RESET pin from input to output, logic low (PORT is already 0)
-                    PS1_TRIS_IO &= ~_BV(PS1_RESET);
-                    __delay_ms(100); // hold reset for 100ms
-                    // change RESET back to input
-                    PS1_TRIS_IO |= _BV(PS1_RESET);
-                    __delay_s(REBOOT_DELAY); // wait 30 sec before next reset, this is to prevent multiple reset one after the other
                 }
             }
 
             clear_buff((uint8_t*)data.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
             clear_buff((uint8_t*)cmd.buff, PS1_CTRL_BUFF_SIZE); // clear controller stuff
-	
+    
             data_cnt = 0; // reset counters
             cmd_cnt = 0; // reset counters
             
@@ -330,6 +347,29 @@ void __delay_s(uint8_t s){
         __delay_ms(1000);
 }
 
+
+void reset_short(void){
+    UART_print((uint8_t*)"\n\rShort Reset successful\n\r");
+    // change RESET pin from input to output, logic low (PORT is already 0)
+    PS1_TRIS_IO &= ~_BV(PS1_RESET);
+    __delay_ms(SHORT_DELAY); // hold reset for 500ms
+    // change RESET back to input
+    PS1_TRIS_IO |= _BV(PS1_RESET);
+    // hold the mcu from resetting too early, just in case
+    __delay_s(REBOOT_DELAY);
+}
+
+void reset_long(void){
+    UART_print((uint8_t*)"\n\rLong Reset successful\n\r");
+    // change RESET pin from input to output, logic low (PORT is already 0)
+    PS1_TRIS_IO &= ~_BV(PS1_RESET);
+    __delay_s(LONG_DELAY); // hold reset for 2s
+    // change RESET back to input
+    PS1_TRIS_IO |= _BV(PS1_RESET);
+    // hold the mcu from resetting too early, just in case
+    __delay_s(REBOOT_DELAY);
+}
+
 #ifdef DEBUG
 /**********************************************************/
 /* UART Debug Functions */
@@ -344,7 +384,6 @@ void UART_init(void){
 
     SP1BRGL = 51; // 9615 baud
     SP1BRGH = 0; // 9615 baud
-    // BRGH = 1 ; SPBRG = 16 -> 117.64k baud
     
     TX1STAbits.SYNC = 0; // Asynch mode
     RC1STAbits.SPEN = 1; // Serial Port enable bit
