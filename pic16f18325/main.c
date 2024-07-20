@@ -70,11 +70,11 @@
 #define PS1_RESET 5 // Only IO that outputs a logic 0
 
 /* Controller ID */
-#define ID_DIG_CTRL 0x5A41 // digital
-#define ID_ANP_CTRL 0x5A73 // analog/pad
-#define ID_ANS_CTRL 0x5A53 // analog/stick
+#define ID_DIG_CTRL 0x5A41 // digital: SCPH-1080 (EU)
+#define ID_ANP_CTRL 0x5A73 // analog/pad: SCPH-110 (EU)
+#define ID_ANS_CTRL 0x5A53 // analog/stick: SCPH-110 (EU)
 #define ID_DS2_CTRL 0x5A79 // dualshock 2
-#define ID_GUNCON_CTRL 0x5A63 // light gun
+#define ID_GUNCON_CTRL 0x5A63 // light gun: NPC-103 (EU)
 
 /* PlayStation Commands */
 #define CMD_SEL_CTRL_1 0x01 // select controller 1
